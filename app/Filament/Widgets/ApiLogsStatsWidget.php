@@ -23,22 +23,18 @@ class ApiLogsStatsWidget extends BaseWidget
         return [
             Stat::make('Requêtes aujourd\'hui', $totalToday)
                 ->description('Total des appels API')
-                ->descriptionIcon('heroicon-o-arrow-trending-up')
                 ->color('primary'),
 
             Stat::make('Erreurs', $errorsToday)
                 ->description('Échecs aujourd\'hui')
-                ->descriptionIcon('heroicon-o-exclamation-triangle')
                 ->color($errorsToday > 0 ? 'danger' : 'success'),
 
             Stat::make('Appels OpenAI', $openaiCalls)
                 ->description('Scans de factures')
-                ->descriptionIcon('heroicon-o-sparkles')
-                ->color('purple'),
+                ->color('info'),
 
             Stat::make('Temps moyen', $avgDuration ? round($avgDuration) . ' ms' : 'N/A')
                 ->description('Latence moyenne')
-                ->descriptionIcon('heroicon-o-clock')
                 ->color($avgDuration && $avgDuration > 2000 ? 'warning' : 'success'),
         ];
     }
