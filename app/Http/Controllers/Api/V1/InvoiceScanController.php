@@ -74,6 +74,9 @@ class InvoiceScanController extends Controller
                 durationMs: $openaiDuration
             );
 
+            // Clean markdown code blocks from response
+            $content = $this->cleanJsonResponse($content);
+
             // Parse JSON response from OpenAI
             $data = json_decode($content, true);
 
@@ -150,6 +153,18 @@ class InvoiceScanController extends Controller
                 'message' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Clean markdown code blocks from OpenAI response
+     */
+    private function cleanJsonResponse(string $content): string
+    {
+        // Remove ```json and ``` markers
+        $content = preg_replace('/^```json\s*/i', '', trim($content));
+        $content = preg_replace('/```\s*$/', '', $content);
+
+        return trim($content);
     }
 
     /**
