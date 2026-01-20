@@ -31,7 +31,6 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login(Login::class)
-            ->registration() // TODO: Supprimer après création du compte admin
             ->colors([
                 'primary' => Color::Blue,
             ])
