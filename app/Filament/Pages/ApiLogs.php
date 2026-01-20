@@ -9,6 +9,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Actions\ViewAction;
 use Illuminate\Database\Eloquent\Builder;
 
 class ApiLogs extends Page implements HasTable
@@ -138,7 +139,7 @@ class ApiLogs extends Page implements HasTable
                     ]),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make()
+                ViewAction::make()
                     ->modalHeading(fn (ApiLog $record): string => "Log #{$record->id}")
                     ->modalContent(fn (ApiLog $record) => view('filament.pages.api-log-detail', ['record' => $record])),
             ])
