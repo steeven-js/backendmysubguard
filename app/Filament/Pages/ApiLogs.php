@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\ApiLog;
+use BackedEnum;
 use Filament\Pages\Page;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -15,7 +16,7 @@ class ApiLogs extends Page implements HasTable
 {
     use InteractsWithTable;
 
-    protected static ?string $navigationIcon = 'heroicon-o-chart-bar';
+    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-chart-bar';
 
     protected static ?string $navigationLabel = 'API Logs';
 
