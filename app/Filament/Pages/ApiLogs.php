@@ -147,10 +147,11 @@ class ApiLogs extends Page implements HasTable
             ->striped();
     }
 
-    protected function getHeaderWidgets(): array
-    {
-        return [
-            \App\Filament\Widgets\ApiLogsStatsWidget::class,
-        ];
-    }
+    // Temporarily disabled - investigate icon rendering issue
+    // protected function getHeaderWidgets(): array
+    // {
+    //     return [
+    //         \App\Filament\Widgets\ApiLogsStatsWidget::class,
+    //     ];
+    // }
 }
