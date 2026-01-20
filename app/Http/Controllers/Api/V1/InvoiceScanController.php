@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\ApiLog;
+use App\Services\ApiLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use OpenAI\Laravel\Facades\OpenAI;
@@ -22,11 +24,16 @@ class InvoiceScanController extends Controller
      */
     public function scan(Request $request): JsonResponse
     {
+        $startTime = microtime(true);
+
         $validated = $request->validate([
             'image_base64' => 'required|string|max:10485760', // ~8MB limit for base64
         ]);
 
         try {
+            // Log outgoing OpenAI request
+            $openaiStartTime = microtime(true);
+
             $response = OpenAI::chat()->create([
                 'model' => 'gpt-4o',
                 'messages' => [
@@ -46,7 +53,26 @@ class InvoiceScanController extends Controller
                 'max_tokens' => 500,
             ]);
 
+            $openaiDuration = (int) ((microtime(true) - $openaiStartTime) * 1000);
             $content = $response->choices[0]->message->content;
+
+            // Log OpenAI call
+            ApiLogService::logOutgoing(
+                service: ApiLog::SERVICE_OPENAI,
+                method: 'POST',
+                endpoint: 'chat/completions (gpt-4o vision)',
+                requestBody: [
+                    'model' => 'gpt-4o',
+                    'prompt' => 'Invoice analysis prompt',
+                    'image_size' => strlen($validated['image_base64']) . ' chars',
+                ],
+                responseBody: [
+                    'content' => $content,
+                    'usage' => $response->usage?->toArray() ?? null,
+                ],
+                statusCode: 200,
+                durationMs: $openaiDuration
+            );
 
             // Parse JSON response from OpenAI
             $data = json_decode($content, true);
@@ -55,6 +81,17 @@ class InvoiceScanController extends Controller
                 Log::warning('InvoiceScan: OpenAI returned invalid JSON', [
                     'content' => $content,
                 ]);
+
+                $totalDuration = (int) ((microtime(true) - $startTime) * 1000);
+
+                // Log incoming request with partial success
+                ApiLogService::logIncoming(
+                    request: $request,
+                    service: ApiLog::SERVICE_APP,
+                    statusCode: 200,
+                    responseBody: ['message' => 'Partial extraction - invalid JSON from OpenAI'],
+                    durationMs: $totalDuration
+                );
 
                 return response()->json([
                     'data' => [
@@ -68,12 +105,45 @@ class InvoiceScanController extends Controller
                 ]);
             }
 
+            $totalDuration = (int) ((microtime(true) - $startTime) * 1000);
+
+            // Log successful incoming request
+            ApiLogService::logIncoming(
+                request: $request,
+                service: ApiLog::SERVICE_APP,
+                statusCode: 200,
+                responseBody: ['data' => $data],
+                durationMs: $totalDuration
+            );
+
             return response()->json(['data' => $data]);
 
         } catch (\Exception $e) {
             Log::error('InvoiceScan: OpenAI API error', [
                 'error' => $e->getMessage(),
             ]);
+
+            $totalDuration = (int) ((microtime(true) - $startTime) * 1000);
+
+            // Log failed OpenAI call
+            ApiLogService::logOutgoing(
+                service: ApiLog::SERVICE_OPENAI,
+                method: 'POST',
+                endpoint: 'chat/completions (gpt-4o vision)',
+                requestBody: ['model' => 'gpt-4o'],
+                statusCode: 500,
+                durationMs: $totalDuration,
+                errorMessage: $e->getMessage()
+            );
+
+            // Log failed incoming request
+            ApiLogService::logIncoming(
+                request: $request,
+                service: ApiLog::SERVICE_APP,
+                statusCode: 500,
+                durationMs: $totalDuration,
+                errorMessage: $e->getMessage()
+            );
 
             return response()->json([
                 'error' => 'Failed to analyze invoice',
