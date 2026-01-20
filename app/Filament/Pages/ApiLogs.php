@@ -9,7 +9,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
-use Filament\Tables\Actions\ViewAction;
+use Filament\Actions\ViewAction;
 use Illuminate\Database\Eloquent\Builder;
 
 class ApiLogs extends Page implements HasTable
